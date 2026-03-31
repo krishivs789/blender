@@ -5,6 +5,16 @@
 import bpy
 
 
+def spreadsheet_filter_is_active(space):
+    if space.show_only_selected:
+        return True
+    if space.row_filters:
+        for f in space.row_filters:
+            if f.enabled:
+                return True
+    return False
+
+
 class SPREADSHEET_HT_header(bpy.types.Header):
     bl_space_type = 'SPREADSHEET'
 
@@ -25,7 +35,7 @@ class SPREADSHEET_HT_header(bpy.types.Header):
             "use_filter",
             toggle=True,
             icon=(
-                'FILTER_FILLED' if space.use_filter else 'FILTER'),
+                'FILTER_FILLED' if spreadsheet_filter_is_active(space) else 'FILTER'),
             icon_only=True)
 
     @staticmethod

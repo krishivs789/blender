@@ -19,6 +19,80 @@ def has_selected_ids_in_context(context):
     return False
 
 
+def outliner_filter_is_active(space):
+    display_mode = space.display_mode
+
+    # Check restriction column toggles
+    if display_mode == 'VIEW_LAYER':
+        if any((
+            space.show_restrict_column_enable,
+            space.show_restrict_column_select,
+            space.show_restrict_column_hide,
+            space.show_restrict_column_viewport,
+            space.show_restrict_column_render,
+            space.show_restrict_column_holdout,
+            space.show_restrict_column_indirect_only,
+        )):
+            return True
+    elif display_mode == 'SCENES':
+        if any((
+            space.show_restrict_column_select,
+            space.show_restrict_column_hide,
+            space.show_restrict_column_viewport,
+            space.show_restrict_column_render,
+        )):
+            return True
+
+    # Check common filter settings
+    if space.use_sort_alpha:
+        return True
+
+    if display_mode != 'LIBRARY_OVERRIDES':
+        if space.show_mode_column:
+            return True
+
+    # Check search filters
+    filter_text_supported = True
+    if (
+        display_mode == 'LIBRARY_OVERRIDES'
+        and space.lib_override_view_mode == 'HIERARCHIES'
+    ):
+        filter_text_supported = False
+
+    if filter_text_supported:
+        if space.use_filter_complete or space.use_filter_case_sensitive:
+            return True
+
+    # Check library override system filters
+    if (
+        display_mode == 'LIBRARY_OVERRIDES'
+        and space.lib_override_view_mode == 'PROPERTIES'
+        and bpy.data.libraries
+    ):
+        if space.use_filter_lib_override_system:
+            return True
+
+    # Check VIEW_LAYER specific filters
+    if display_mode == 'VIEW_LAYER':
+        if any((
+            space.use_filter_view_layers,
+            space.use_filter_collection != True,
+            space.use_filter_object != True,
+            space.filter_state != 'ALL',
+            space.use_filter_object_content,
+            space.use_filter_object_mesh,
+            space.use_filter_object_armature,
+            space.use_filter_object_light,
+            space.use_filter_object_camera,
+            space.use_filter_object_grease_pencil,
+            space.use_filter_object_empty,
+            space.use_filter_object_others,
+        )):
+            return True
+
+    return False
+
+
 class OUTLINER_HT_header(Header):
     bl_space_type = 'OUTLINER'
 
@@ -62,7 +136,7 @@ class OUTLINER_HT_header(Header):
             row.popover(
                 panel="OUTLINER_PT_filter",
                 text="",
-                icon='FILTER',
+                icon='FILTER_FILLED' if outliner_filter_is_active(space) else 'FILTER',
             )
 
         if display_mode in {'LIBRARIES', 'ORPHAN_DATA'}:

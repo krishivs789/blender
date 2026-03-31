@@ -45,7 +45,7 @@ class FILEBROWSER_HT_header(Header):
         layout.popover(
             panel="ASSETBROWSER_PT_filter",
             text="",
-            icon='FILTER',
+            icon='FILTER_FILLED' if filebrowser_filter_is_active(params) else 'FILTER',
         )
 
         layout.operator(
@@ -394,6 +394,36 @@ class FILEBROWSER_PT_advanced_filter(Panel):
                     row.prop(filter_id, identifier, toggle=False)
 
 
+
+def filebrowser_filter_is_active(params):
+    if params.use_filter_folder:
+        return True
+    if params.filter_glob:
+        pass
+    else:
+        if any((
+            params.use_filter_blender,
+            params.use_filter_backup,
+            params.use_filter_image,
+            params.use_filter_movie,
+            params.use_filter_script,
+            params.use_filter_font,
+            params.use_filter_sound,
+            params.use_filter_text,
+            params.use_filter_volume,
+        )):
+            return True
+
+    if params.use_library_browsing:
+        if params.use_filter_blendid:
+            if params.use_filter_asset_only:
+                return True
+
+    if params.show_hidden:
+        return True
+
+    return False
+
 def is_option_region_visible(context, space):
     from bpy_extras.asset_utils import SpaceAssetInfo
 
@@ -466,7 +496,10 @@ class FILEBROWSER_PT_directory_path(Panel):
 
         subsubrow = subrow.row(align=True)
         subsubrow.prop(params, "use_filter", toggle=True, icon=(
-            'FILTER_FILLED' if params.use_filter else 'FILTER'), icon_only=True)
+            'FILTER_FILLED'
+            if params.use_filter and filebrowser_filter_is_active(params)
+            else 'FILTER'),
+            icon_only=True)
         subsubrow.popover("FILEBROWSER_PT_filter", text="")
 
         if space.active_operator:
